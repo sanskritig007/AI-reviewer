@@ -10,8 +10,8 @@ app.post("/webhook", async (req, res) => {
     console.log("Webhook received!");
 
     const action = req.body.action;
-
-    if (action === "opened") {
+    console.log("Action received:", req.body.action);
+    if (["opened", "synchronize", "reopened"].includes(action)) {
         const repoOwner = req.body.repository.owner.login;
         const repoName = req.body.repository.name;
         const prNumber = req.body.number;
@@ -30,7 +30,10 @@ app.post("/webhook", async (req, res) => {
 
             console.log("Changed Files:");
             response.data.forEach(file => {
-                console.log("File:", file.filename);
+              console.log("File:", file.filename);
+              console.log("Patch:");
+              console.log(file.patch);
+              console.log("--------------------");
             });
 
         } catch (error) {
