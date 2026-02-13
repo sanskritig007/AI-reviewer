@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Repository {
+  id              Int      @id @default(autoincrement())
+  githubId        BigInt   @unique
+  owner           String
+  name            String
+  isActive        Boolean  @default(true)
+  customPrompt    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  reviews         Review[]
+}
+
+model Review {
+  id              Int      @id @default(autoincrement())
+  repositoryId    Int
+  repository      Repository @relation(fields: [repositoryId], references: [id])
+  prNumber        Int
+  commitHash      String
+  status          String   // "PENDING", "COMPLETED", "FAILED"
+  aiResponse      Json?
+  createdAt       DateTime @default(now())
+}
