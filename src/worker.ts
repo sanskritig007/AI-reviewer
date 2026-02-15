@@ -65,7 +65,8 @@ export const initWorker = () => {
         connection: {
             host: config.redis.host,
             port: config.redis.port,
-            password: config.redis.password
+            password: config.redis.password,
+            tls: config.redis.tls
         },
         concurrency: 2 // Handle 2 reviews at a time
     });

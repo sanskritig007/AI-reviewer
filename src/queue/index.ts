@@ -7,6 +7,7 @@ export const reviewQueue = new Queue('code-review-queue', {
         host: config.redis.host,
         port: config.redis.port,
         password: config.redis.password,
+        tls: config.redis.tls,
     },
 });
 
