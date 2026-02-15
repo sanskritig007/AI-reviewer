@@ -2,14 +2,14 @@ import { Queue } from 'bullmq';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
-export const reviewQueue = new Queue('code-review-queue', {
+export const reviewQueue = new Queue("review", {
     connection: {
         host: config.redis.host,
         port: config.redis.port,
         password: config.redis.password,
-        tls: config.redis.tls,
     },
 });
+
 
 reviewQueue.on('error', (err) => {
     logger.error('Redis Queue Error', { error: err.message });
