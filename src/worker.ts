@@ -61,7 +61,7 @@ const processReviewJob = async (job: Job) => {
 };
 
 export const initWorker = () => {
-    const worker = new Worker('code-review-queue', processReviewJob, {
+    const worker = new Worker('review', processReviewJob, {
         connection: {
             host: config.redis.host,
             port: config.redis.port,
