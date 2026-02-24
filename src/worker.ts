@@ -13,13 +13,22 @@ const processReviewJob = async (job: Job) => {
         // 1. Get GitHub Client
         const octokit = await getGitHubClient(installationId);
 
-        // 1a. Fetch Repo Settings & Custom Prompt
-        const dbRepo = await prisma.repository.findUnique({
+        // 1a. Fetch or Create Repo Settings
+        let dbRepo = await prisma.repository.findUnique({
             where: { githubId: BigInt(installationId) }
         });
 
-        // Let's fix the schema mapping. 
-        // We haven't stored the repo yet. For MVP, if not found, use defaults.
+        if (!dbRepo) {
+            logger.info('Repository not found in DB, creating...', { installationId });
+            dbRepo = await prisma.repository.create({
+                data: {
+                    githubId: BigInt(installationId),
+                    owner,
+                    name: repo,
+                }
+            });
+        }
+
         const customPrompt = dbRepo?.customPrompt || '';
 
         // 2. Fetch Diff
@@ -34,9 +43,6 @@ const processReviewJob = async (job: Job) => {
         logger.info('AI Analysis complete', { jobId: job.id, summary: aiResponse.summary });
 
         // 4. Post Comments
-        // For MVP, we'll post a single summary comment. 
-        // In production, we would use strict inline line-by-line comments.
-
         let commentBody = `### AI Code Review\n\n**Summary:** ${aiResponse.summary}\n\n`;
 
         if (aiResponse.reviews && aiResponse.reviews.length > 0) {
@@ -54,8 +60,21 @@ const processReviewJob = async (job: Job) => {
         await postComment(octokit, owner, repo, prNumber, commentBody);
         logger.info('Review posted', { jobId: job.id });
 
+        // 5. Save Review to DB
+        await prisma.review.create({
+            data: {
+                repositoryId: dbRepo.id,
+                prNumber,
+                commitHash: job.data.commitSha || 'unknown',
+                status: 'COMPLETED',
+                aiResponse: aiResponse as any,
+            }
+        });
+        logger.info('Review saved to database', { jobId: job.id });
+
     } catch (error: any) {
         logger.error('Job processing failed', { jobId: job.id, error: error.message });
+        // Optionally save failure to DB
         throw error; // Retry job
     }
 };
@@ -66,6 +85,7 @@ export const initWorker = () => {
             host: config.redis.host,
             port: config.redis.port,
             password: config.redis.password,
+            username: "default"
         },
         concurrency: 2 // Handle 2 reviews at a time
     });

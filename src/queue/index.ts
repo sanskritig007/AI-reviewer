@@ -1,11 +1,11 @@
 import { Queue } from 'bullmq';
 import { config } from '../config';
 import { logger } from '../utils/logger';
-
 export const reviewQueue = new Queue("review", {
     connection: {
         host: config.redis.host,
         port: config.redis.port,
+        username: "default",
         password: config.redis.password,
     },
 });

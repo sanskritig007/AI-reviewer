@@ -5,8 +5,7 @@ import { webhookHandler } from './handlers/webhook';
 import { initWorker } from './worker';
 
 const app = express();
-
-// Middleware to parse JSON bodies
+app.use("/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 
 app.post('/webhook', webhookHandler);

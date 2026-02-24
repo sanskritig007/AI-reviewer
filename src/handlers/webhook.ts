@@ -1,3 +1,4 @@
+
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { config } from '../config';
@@ -13,8 +14,15 @@ const verifySignature = (req: Request): boolean => {
         return false;
     }
 
-    const hmac = crypto.createHmac('sha256', secret);
-    const digest = 'sha256=' + hmac.update(JSON.stringify(req.body)).digest('hex');
+    // IMPORTANT: Use raw body (Buffer)
+    const rawBody = req.body;
+
+    const digest =
+        'sha256=' +
+        crypto
+            .createHmac('sha256', secret)
+            .update(rawBody) // 👈 RAW BUFFER
+            .digest('hex');
 
     const trusted = Buffer.from(signature);
     const untrusted = Buffer.from(digest);
@@ -26,23 +34,37 @@ const verifySignature = (req: Request): boolean => {
     return crypto.timingSafeEqual(trusted, untrusted);
 };
 
-export const webhookHandler = async (req: Request, res: Response): Promise<void> => {
-    // 1. Verify Signature
-    if (!verifySignature(req)) {
-        logger.warn('Invalid Webhook Signature', { ip: req.ip });
-        res.status(401).send('Unauthorized');
-        return;
-    }
+export const webhookHandler = async (req: Request, res: Response) => {
+    try {
+        // 1️⃣ Verify signature
+        if (!verifySignature(req)) {
+            logger.warn('Invalid Webhook Signature', { ip: req.ip });
+            return res.status(401).send('Unauthorized');
+        }
 
-    const { action, repository, pull_request, installation } = req.body;
-    const event = req.headers['x-github-event'];
+        // 2️⃣ Parse raw body manually
+        const payload = JSON.parse(req.body.toString());
 
-    logger.info('Webhook received', { event, action, repo: repository?.full_name });
+        const { action, repository, pull_request, installation } = payload;
+        const event = req.headers['x-github-event'];
 
-    // 2. Filter Events
-    if (event === 'pull_request' && ['opened', 'synchronize', 'reopened'].includes(action)) {
-        try {
-            // 3. Enqueue Job
+        logger.info('Webhook received', {
+            event,
+            action,
+            repo: repository?.full_name,
+        });
+
+        // 3️⃣ Validate installation (GitHub App requirement)
+        if (!installation?.id) {
+            logger.error('Missing installation ID');
+            return res.status(400).send('Missing installation');
+        }
+
+        // 4️⃣ Filter only valid PR events
+        if (
+            event === 'pull_request' &&
+            ['opened', 'synchronize', 'reopened'].includes(action)
+        ) {
             await addReviewJob({
                 type: 'review',
                 installationId: installation.id,
@@ -51,12 +73,19 @@ export const webhookHandler = async (req: Request, res: Response): Promise<void>
                 prNumber: pull_request.number,
                 commitSha: pull_request.head.sha,
             });
-            res.status(200).send('Queued');
-        } catch (error) {
-            logger.error('Failed to enqueue job', { error });
-            res.status(500).send('Internal Server Error');
+
+            return res.status(200).send('Queued');
         }
-    } else {
-        res.status(200).send('Ignored');
+
+        return res.status(200).send('Ignored');
+    } catch (error: any) {
+        console.error('REAL ERROR:', error);
+
+        logger.error('Failed to process webhook', {
+            message: error?.message,
+            stack: error?.stack,
+        });
+
+        return res.status(500).send('Internal Server Error');
     }
 };
