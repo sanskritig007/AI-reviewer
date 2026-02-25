@@ -2,11 +2,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
-const genAI = new GoogleGenerativeAI(config.gemini.apiKey || '');
+const genAI = new GoogleGenerativeAI(
+  config.gemini.apiKey || ''
+);
 
 export const analyzeCode = async (diff: string, customInstructions?: string) => {
   try {
-    const model = genAI.getGenerativeModel({ model: config.gemini.model || 'gemini-1.5-flash' });
+    const modelName = config.gemini.model || 'gemini-2.5-flash';
+    logger.info('Starting AI analysis', { model: modelName, apiKeyPresent: !!config.gemini.apiKey });
+
+    // Some regions/keys require v1 explicit or different model names
+    const model = genAI.getGenerativeModel({
+      model: modelName
+    });
 
     const prompt = `
     You are an expert Senior Software Engineer acting as a Code Reviewer.

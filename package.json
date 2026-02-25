@@ -7,7 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts"
+    "dev": "nodemon src/server.ts",
+    "simulate:webhook": "ts-node scripts/simulate_webhook.ts",
+    "check:db": "ts-node scripts/check_db.ts",
+    "test:redis": "ts-node scripts/test_redis.ts"
   },
   "keywords": [],
   "author": "",

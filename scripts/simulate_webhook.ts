@@ -1,9 +1,8 @@
 import axios from 'axios';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import path from 'path';
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config();
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'ai-reviewer-secret-123';
 const PORT = process.env.PORT || 3000;
