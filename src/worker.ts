@@ -1,12 +1,12 @@
 import { Worker, Job } from 'bullmq';
 import { config } from './config';
 import { logger } from './utils/logger';
-import { getGitHubClient, getPRDiff, postComment } from './services/github';
+import { getGitHubClient, getPRDiff, createReview, ReviewComment } from './services/github';
 import { analyzeCode } from './services/ai';
 import { prisma } from './db';
 
 const processReviewJob = async (job: Job) => {
-    const { installationId, owner, repo, prNumber } = job.data;
+    const { installationId, owner, repo, prNumber, commitSha } = job.data;
     logger.info(`Processing review job ${job.id} for PR #${prNumber} in ${owner}/${repo}`);
 
     try {
@@ -42,30 +42,41 @@ const processReviewJob = async (job: Job) => {
         const aiResponse = await analyzeCode(diff, customPrompt);
         logger.info('AI Analysis complete', { jobId: job.id, summary: aiResponse.summary });
 
-        // 4. Post Comments
-        let commentBody = `### AI Code Review\n\n**Summary:** ${aiResponse.summary}\n\n`;
+        // 4. Post GitHub Review
+        const summary = aiResponse.summary;
+        const reviewComments: ReviewComment[] = (aiResponse.reviews || []).map((review: any) => {
+            let body = `**[${review.severity}]** ${review.message}`;
+            if (review.suggestion) {
+                // Ensure suggestions are wrapped in appropriate markdown if not already
+                const suggestion = review.suggestion.includes('```')
+                    ? review.suggestion
+                    : `\`\`\`suggestion\n${review.suggestion}\n\`\`\``;
+                body += `\n\n${suggestion}`;
+            }
+            return {
+                path: review.file,
+                line: review.line,
+                body: body
+            };
+        });
 
-        if (aiResponse.reviews && aiResponse.reviews.length > 0) {
-            commentBody += `**Findings:**\n`;
-            aiResponse.reviews.forEach((review: any) => {
-                commentBody += `- **[${review.severity}]** ${review.file}:${review.line} - ${review.message}\n`;
-                if (review.suggestion) {
-                    commentBody += `  \`\`\`suggested\n${review.suggestion}\n\`\`\`\n`;
-                }
-            });
-        } else {
-            commentBody += `✅ No major issues found.`;
-        }
-
-        await postComment(octokit, owner, repo, prNumber, commentBody);
-        logger.info('Review posted', { jobId: job.id });
+        await createReview(
+            octokit,
+            owner,
+            repo,
+            prNumber,
+            commitSha || 'unknown',
+            summary,
+            reviewComments
+        );
+        logger.info('Review posted to GitHub', { jobId: job.id });
 
         // 5. Save Review to DB
         await prisma.review.create({
             data: {
                 repositoryId: dbRepo.id,
                 prNumber,
-                commitHash: job.data.commitSha || 'unknown',
+                commitHash: commitSha || 'unknown',
                 status: 'COMPLETED',
                 aiResponse: aiResponse as any,
             }
@@ -73,18 +84,15 @@ const processReviewJob = async (job: Job) => {
         logger.info('Review saved to database', { jobId: job.id });
 
     } catch (error: any) {
-        logger.error('Job processing failed', { jobId: job.id, error: error.message });
-        // Optionally save failure to DB
-        throw error; // Retry job
+        logger.error('Job processing failed', { jobId: job.id, error: error.message, stack: error.stack });
+        throw error; // Let BullMQ handle retries
     }
 };
 
 export const initWorker = () => {
     const worker = new Worker('review', processReviewJob, {
         connection: {
-            host: config.redis.host,
-            port: config.redis.port,
-            password: config.redis.password,
+            ...config.redis,
             username: "default"
         },
         concurrency: 2 // Handle 2 reviews at a time

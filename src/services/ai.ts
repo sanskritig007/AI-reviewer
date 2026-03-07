@@ -22,20 +22,22 @@ export const analyzeCode = async (diff: string, customInstructions?: string) => 
 
     Instructions:
     1. Focus on Bugs, Security Issues, and Performance Bottlenecks.
-    2. Ignore formatting/style issues (prettier handles that).
-    3. Be specific and provide code examples for fixes.
-    4. Return your response in valid JSON format with the following structure:
+    2. Every finding MUST have a "file" (relative path from diff) and a "line" (the line number in the NEW version of the file).
+    3. If a finding is general, include it in the "summary" instead of the "reviews" array.
+    4. Ignore minor style or formatting nitpicks.
+    5. Provide specific, actionable suggestions with code snippets where possible.
+    6. Return your response in valid JSON format with the following structure:
     {
       "reviews": [
         {
-          "file": "filename",
+          "file": "relative/path/to/file.ts",
           "line": 10,
           "severity": "HIGH" | "MEDIUM" | "LOW",
-          "message": "description of the issue",
-          "suggestion": "code snippet to fix it"
+          "message": "Description of the issue.",
+          "suggestion": "Optional code snippet for the fix."
         }
       ],
-      "summary": "General summary of the changes"
+      "summary": "A concise summary of the overall review."
     }
 
     ${customInstructions ? `Custom Instructions for this repo: ${customInstructions}` : ''}

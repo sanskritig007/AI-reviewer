@@ -12,6 +12,9 @@ export const config = {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379'),
         password: process.env.REDIS_PASSWORD,
+        tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+        connectTimeout: 10000,
+        maxRetriesPerRequest: null,
     },
     gemini: {
         apiKey: process.env.GEMINI_API_KEY,

@@ -25,16 +25,16 @@ export const getPRDiff = async (octokit: Octokit, owner: string, repo: string, p
     if (owner === 'test-user' && repo === 'test-repo') {
         logger.info('Returning MOCK DIFF for simulation');
         return `diff --git a/test.js b/test.js
-index 83db48f..f1b2c3d 100644
---- a/test.js
-+++ b/test.js
-@@ -1,5 +1,5 @@
--const x = 1;
-+var x = 1; // Bad practice: var
+    index 83db48f..f1b2c3d 100644
+    --- a/test.js
+    +++ b/test.js
+    @@ -1,5 +1,5 @@
+    -const x = 1;
+    +var x = 1; // Bad practice: var
  function test() {
--  console.log("hello");
-+  console.log("hello"); 
- }`;
+  -  console.log("hello");
+  +  console.log("hello"); 
+   }`;
     }
 
     const response = await octokit.rest.pulls.get({
@@ -46,6 +46,49 @@ index 83db48f..f1b2c3d 100644
         },
     });
     return response.data as unknown as string; // diff format
+};
+
+export interface ReviewComment {
+    path: string;
+    line: number;
+    body: string;
+}
+
+export const createReview = async (
+    octokit: Octokit,
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    commitId: string,
+    summary: string,
+    comments: ReviewComment[]
+) => {
+    // Mock for Simulation Script
+    if (owner === 'test-user' && repo === 'test-repo') {
+        logger.info('Mock Review Created', { summary, commentCount: comments.length });
+        return;
+    }
+
+    try {
+        await octokit.rest.pulls.createReview({
+            owner,
+            repo,
+            pull_number: pullNumber,
+            commit_id: commitId,
+            body: summary,
+            event: 'COMMENT',
+            comments: comments.map(c => ({
+                path: c.path,
+                line: c.line,
+                body: c.body,
+                side: 'RIGHT' // Reviewing the 'new' version
+            })),
+        });
+        logger.info('GitHub Review created successfully', { owner, repo, pullNumber });
+    } catch (error: any) {
+        logger.error('Failed to create GitHub review', { error: error.message, stack: error.stack });
+        throw error;
+    }
 };
 
 export const postComment = async (octokit: Octokit, owner: string, repo: string, pullNumber: number, body: string) => {
