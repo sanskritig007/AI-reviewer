@@ -1,20 +1,15 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
-const genAI = new GoogleGenerativeAI(
-  config.gemini.apiKey || ''
-);
+const openai = new OpenAI({
+  apiKey: config.openai.apiKey || ''
+});
 
 export const analyzeCode = async (diff: string, customInstructions?: string) => {
   try {
-    const modelName = config.gemini.model || 'gemini-2.5-flash';
-    logger.info('Starting AI analysis', { model: modelName, apiKeyPresent: !!config.gemini.apiKey });
-
-    // Some regions/keys require v1 explicit or different model names
-    const model = genAI.getGenerativeModel({
-      model: modelName
-    });
+    const modelName = config.openai.model || 'gpt-4o-mini';
+    logger.info('Starting AI analysis', { model: modelName, apiKeyPresent: !!config.openai.apiKey });
 
     const prompt = `
     You are an expert Senior Software Engineer acting as a Code Reviewer.
@@ -46,14 +41,14 @@ export const analyzeCode = async (diff: string, customInstructions?: string) => 
     ${diff}
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = await openai.chat.completions.create({
+      model: modelName,
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }
+    });
 
-    // Clean up markdown code blocks if present
-    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '');
-
-    return JSON.parse(cleanJson);
+    const text = response.choices[0].message.content || '{}';
+    return JSON.parse(text);
   } catch (error: any) {
     logger.error('AI Analysis Failed', { error: error.message });
     throw error; // Let the worker retry

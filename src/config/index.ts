@@ -16,8 +16,8 @@ export const config = {
         connectTimeout: 10000,
         maxRetriesPerRequest: null,
     },
-    gemini: {
-        apiKey: process.env.GEMINI_API_KEY,
-        model: process.env.GEMINI_MODEL,
+    openai: {
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     },
 }

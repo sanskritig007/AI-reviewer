@@ -16,7 +16,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@octokit/auth-app": "^8.2.0",
     "@prisma/client": "^5.22.0",
     "axios": "^1.13.5",
@@ -25,6 +24,7 @@
     "express": "^5.2.1",
     "ioredis": "^5.9.3",
     "octokit": "^5.0.5",
+    "openai": "^6.34.0",
     "prisma": "^5.22.0"
   },
   "repository": {
