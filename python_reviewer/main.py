@@ -29,12 +29,11 @@ WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
 async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha: str, head_sha: str):
     tracker = get_metrics_tracker()
     tracker.reset()
-    tracker.start_timer()
-    
+    tracker.start_timer() #kitna time lg rha h usse measure kr rha h 
     logger.info(f"Starting review for commit {commit_id}")
     
     try:
-        # Fetch diff
+        # Fetch diff purane aur nayae code ke bich ka difference
         diff_text = await github_client.get_compare_diff(
             full_name=payload.repository.full_name,
             base=base_sha,
@@ -48,10 +47,10 @@ async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha:
             return
 
         # Parse diff into chunks
-        file_diffs = github_client.parse_unified_diff(diff_text)
+        file_diffs = github_client.parse_unified_diff(diff_text) #Diff text ko files aur lines mein organize kiya jata hai
         
         # Analyze
-        review_result = await review_diffs(file_diffs)
+        review_result = await review_diffs(file_diffs) #AI code ko read karta hai aur galtiyan/suggestions nikalta hai.
         
         tracker.stop_timer()
         
