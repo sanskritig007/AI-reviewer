@@ -18,3 +18,6 @@ __pycache__/
 venv/
 python_reviewer/.venv/
 python_reviewer/.venvcl/
+
+walkthrough.md
+ngrok.exe

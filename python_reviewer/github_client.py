@@ -37,6 +37,23 @@ class GitHubClient:
                 logger.error(f"Request error fetching diff from GitHub: {e}")
                 return None
 
+    async def post_commit_comment(self, full_name: str, commit_sha: str, body: str) -> bool:
+        """Post a comment on a specific commit."""
+        url = f"{GITHUB_API_URL}/repos/{full_name}/commits/{commit_sha}/comments"
+        payload = {"body": body}
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(url, headers=self.headers, json=payload, timeout=15.0)
+                if response.status_code == 201:
+                    logger.info(f"Successfully posted comment on commit {commit_sha}")
+                    return True
+                else:
+                    logger.error(f"Failed to post comment. API Error [{response.status_code}]: {response.text}")
+                    return False
+            except httpx.RequestError as e:
+                logger.error(f"Request error posting comment to GitHub: {e}")
+                return False
+
     def parse_unified_diff(self, diff_text: str) -> Dict[str, str]:
         """
         Parses a unified diff string and splits it by file.

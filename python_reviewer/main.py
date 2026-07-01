@@ -11,14 +11,14 @@ try:
     from .schemas import WebhookPayload
     from .github_client import GitHubClient
     from .ai_engine import review_diffs
-    from .output_formatter import print_review_results
+    from .output_formatter import print_review_results, format_review_markdown
     from .observability import is_commit_processed, mark_commit_processed, logger
     from .metrics import get_metrics_tracker
 except ImportError:
     from schemas import WebhookPayload
     from github_client import GitHubClient
     from ai_engine import review_diffs
-    from output_formatter import print_review_results
+    from output_formatter import print_review_results, format_review_markdown
     from observability import is_commit_processed, mark_commit_processed, logger
     from metrics import get_metrics_tracker
 
@@ -54,8 +54,17 @@ async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha:
         
         tracker.stop_timer()
         
-        # Print results
+        # Print results to terminal
         print_review_results(review_result, commit_id)
+        
+        # Post results to GitHub
+        review_md = format_review_markdown(review_result, commit_id)
+        post_success = await github_client.post_commit_comment(
+            full_name=payload.repository.full_name,
+            commit_sha=commit_id,
+            body=review_md
+        )
+        
         mark_commit_processed(commit_id)
         logger.info(f"Commit {commit_id} marked as processed.")
         
