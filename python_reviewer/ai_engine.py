@@ -3,8 +3,9 @@ import re
 import json
 import asyncio
 from typing import Dict, List, Optional
-from openai import AsyncOpenAI
 from pydantic import ValidationError
+from google import genai
+from google.genai import types
 
 try:
     from .schemas import AIReviewResponse
@@ -15,14 +16,13 @@ except ImportError:
     from observability import logger, log_failure
     from metrics import get_metrics_tracker
 
-MODEL_NAME = "gpt-4o-mini"
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 MAX_RETRIES = 3
 MAX_FILES_PER_REQUEST = 10
-MAX_CHARACTERS_PER_FILE = 15000
+MAX_CHARACTERS_PER_FILE = 50000  # Increased for Gemini
 
-# You need OPENAI_API_KEY in your environment variables
-
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# You need GEMINI_API_KEY in your environment variables
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 PROMPT_TEMPLATE = """
 You are an expert Senior Staff Software Engineer and System Architect reviewing pull request code changes.
@@ -67,23 +67,28 @@ def extract_json(raw_text: str) -> str:
         
     return raw_text # Fallback to raw text if no braces found
 
-async def call_openai_with_retry(diff_content: str, attempt: int = 1) -> Optional[AIReviewResponse]:
+async def call_ai_with_retry(diff_content: str, attempt: int = 1) -> Optional[AIReviewResponse]:
     tracker = get_metrics_tracker()
     try:
         prompt = PROMPT_TEMPLATE.replace("{diff_content}", diff_content)
         
-        response = await client.chat.completions.create(
+        # We use run_in_executor if AsyncClient is not readily available in genai,
+        # but modern google-genai supports async client. Let's use the synchronous API properly in a thread,
+        # or just async client if available. The simplest is client.aio.models.generate_content
+        response = await client.aio.models.generate_content(
             model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.2,
+            )
         )
         
-        content = response.choices[0].message.content or ""
+        content = response.text or ""
         
         # Track Tokens
-        usage = response.usage
+        usage = response.usage_metadata
         if usage:
-            tracker.add_tokens(usage.prompt_tokens, usage.completion_tokens)
+            tracker.add_tokens(usage.prompt_token_count, usage.candidates_token_count)
             
         json_str = extract_json(content)
         parsed_json = json.loads(json_str)
@@ -94,16 +99,16 @@ async def call_openai_with_retry(diff_content: str, attempt: int = 1) -> Optiona
         logger.warning(f"Failed to parse AI response on attempt {attempt}: {e}")
         if attempt < MAX_RETRIES:
             await asyncio.sleep(2 ** attempt)  # Exponential backoff
-            return await call_openai_with_retry(diff_content, attempt + 1)
+            return await call_ai_with_retry(diff_content, attempt + 1)
         else:
             logger.error("Max retries exceeded for AI validation.")
             log_failure({"diff": diff_content, "raw_response": content}, str(e))
             return get_fallback_response()
     except Exception as e:
-        logger.error(f"OpenAI API Error on attempt {attempt}: {e}")
+        logger.error(f"Gemini API Error on attempt {attempt}: {e}")
         if attempt < MAX_RETRIES:
             await asyncio.sleep(2 ** attempt)
-            return await call_openai_with_retry(diff_content, attempt + 1)
+            return await call_ai_with_retry(diff_content, attempt + 1)
         return get_fallback_response()
 
 def get_fallback_response() -> AIReviewResponse:
@@ -133,9 +138,9 @@ async def review_diffs(file_diffs: Dict[str, str]) -> AIReviewResponse:
             logger.info(f"Skipping large file {fname} ({len(diff)} chars)")
             continue
             
-        if len(current_chunk_str) + len(diff) > 20000: # ~5k tokens
+        if len(current_chunk_str) + len(diff) > 80000: # ~20k tokens for Gemini
             # Send current chunk
-            resp = await call_openai_with_retry(current_chunk_str)
+            resp = await call_ai_with_retry(current_chunk_str)
             if resp:
                 merged_summary.append(resp.summary)
                 merged_issues.extend(resp.issues)
@@ -145,7 +150,7 @@ async def review_diffs(file_diffs: Dict[str, str]) -> AIReviewResponse:
         current_chunk_str += f"\nFile: {fname}\n{diff}\n"
         
     if current_chunk_str:
-        resp = await call_openai_with_retry(current_chunk_str)
+        resp = await call_ai_with_retry(current_chunk_str)
         if resp:
             merged_summary.append(resp.summary)
             merged_issues.extend(resp.issues)
