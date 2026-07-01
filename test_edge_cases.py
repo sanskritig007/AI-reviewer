@@ -38,4 +38,5 @@ def perfect_function(a: int, b: int) -> int:
     EDGE CASE 5: Clean Code
     The AI should find NO issues here and praise the clean implementation.
     """
+    # Simple addition helper
     return a + b
