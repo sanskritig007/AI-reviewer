@@ -14,6 +14,7 @@ try:
     from .output_formatter import print_review_results, format_review_markdown
     from .observability import is_commit_processed, mark_commit_processed, logger
     from .metrics import get_metrics_tracker
+    from .security_scanner import scan_diffs
 except ImportError:
     from schemas import WebhookPayload
     from github_client import GitHubClient
@@ -21,6 +22,7 @@ except ImportError:
     from output_formatter import print_review_results, format_review_markdown
     from observability import is_commit_processed, mark_commit_processed, logger
     from metrics import get_metrics_tracker
+    from security_scanner import scan_diffs
 
 app = FastAPI(title="AI GitHub Code Reviewer")
 github_client = GitHubClient()
@@ -49,8 +51,15 @@ async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha:
         # Parse diff into chunks
         file_diffs = github_client.parse_unified_diff(diff_text) #Diff text ko files aur lines mein organize kiya jata hai
         
-        # Analyze
-        review_result = await review_diffs(file_diffs) #AI code ko read karta hai aur galtiyan/suggestions nikalta hai.
+        # 1. Pre-AI Security Scan
+        security_review = scan_diffs(file_diffs)
+        
+        if security_review:
+            logger.warning(f"Security Scanner blocked commit {commit_id} due to hardcoded secrets!")
+            review_result = security_review
+        else:
+            # 2. Analyze via AI
+            review_result = await review_diffs(file_diffs) #AI code ko read karta hai aur galtiyan/suggestions nikalta hai.
         
         tracker.stop_timer()
         
