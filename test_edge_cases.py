@@ -1,10 +1,12 @@
 import sqlite3
+import os
 
 # EDGE CASE 1: Hardcoded Secrets (Security Vulnerability)
 # The AI should immediately flag this as a critical security risk.
-SECRET_API_KEY = "sk-live-1234567890abcdef1234567890abcdef"
-AWS_SECRET_ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE"
-OPENAI_TEST_KEY = "sk-1234567890abcdef1234567890abcdef1234567890abcdef"
+# Fixed: Keys removed.
+SECRET_API_KEY = os.getenv("SECRET_API_KEY")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+OPENAI_TEST_KEY = os.getenv("OPENAI_TEST_KEY")
 
 def get_user_data(username):
     # EDGE CASE 2: SQL Injection (Security Vulnerability)
