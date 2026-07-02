@@ -33,6 +33,12 @@ async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha:
     tracker.reset()
     tracker.start_timer() #kitna time lg rha h usse measure kr rha h 
     logger.info(f"Starting review for commit {commit_id}")
+    await github_client.set_commit_status(
+        full_name=payload.repository.full_name, 
+        commit_sha=commit_id, 
+        state="pending", 
+        description="AI is reviewing your code..."
+    )
     
     try:
         # Fetch diff purane aur nayae code ke bich ka difference
@@ -57,9 +63,31 @@ async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha:
         if security_review:
             logger.warning(f"Security Scanner blocked commit {commit_id} due to hardcoded secrets!")
             review_result = security_review
+            await github_client.set_commit_status(
+                full_name=payload.repository.full_name, 
+                commit_sha=commit_id, 
+                state="failure", 
+                description="CRITICAL: Hardcoded secrets detected!"
+            )
         else:
             # 2. Analyze via AI
             review_result = await review_diffs(file_diffs) #AI code ko read karta hai aur galtiyan/suggestions nikalta hai.
+            
+            # Set appropriate commit status
+            if len(review_result.issues) > 0:
+                await github_client.set_commit_status(
+                    full_name=payload.repository.full_name, 
+                    commit_sha=commit_id, 
+                    state="failure", 
+                    description=f"AI found {len(review_result.issues)} issue(s). Please review."
+                )
+            else:
+                await github_client.set_commit_status(
+                    full_name=payload.repository.full_name, 
+                    commit_sha=commit_id, 
+                    state="success", 
+                    description="Code is clean! No major issues found."
+                )
         
         tracker.stop_timer()
         

@@ -54,6 +54,34 @@ class GitHubClient:
                 logger.error(f"Request error posting comment to GitHub: {e}")
                 return False
 
+    async def set_commit_status(self, full_name: str, commit_sha: str, state: str, description: str) -> bool:
+        """Sets the status of a commit (pending, success, failure, error)."""
+        url = f"{GITHUB_API_URL}/repos/{full_name}/statuses/{commit_sha}"
+        
+        # Determine github api version required headers for statuses if any, mostly standard.
+        # However, the Accept header for statuses is standard v3 json, not diff.
+        headers = self.headers.copy()
+        headers["Accept"] = "application/vnd.github.v3+json"
+        
+        payload = {
+            "state": state,
+            "description": description[:140],  # GitHub limits description to 140 chars
+            "context": "AI Reviewer"
+        }
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(url, headers=headers, json=payload, timeout=15.0)
+                if response.status_code == 201:
+                    logger.info(f"Set commit {commit_sha} status to {state}")
+                    return True
+                else:
+                    logger.error(f"Failed to set commit status. API Error [{response.status_code}]: {response.text}")
+                    return False
+            except httpx.RequestError as e:
+                logger.error(f"Request error setting commit status: {e}")
+                return False
+
     def parse_unified_diff(self, diff_text: str) -> Dict[str, str]:
         """
         Parses a unified diff string and splits it by file.
