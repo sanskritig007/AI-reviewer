@@ -72,6 +72,13 @@ async def call_ai_with_retry(diff_content: str, attempt: int = 1) -> Optional[AI
     try:
         prompt = PROMPT_TEMPLATE.replace("{diff_content}", diff_content)
         
+        # Phase 3: Inject custom company guidelines if ai_rules.txt exists
+        rules_path = os.path.join(os.path.dirname(__file__), '..', 'ai_rules.txt')
+        if os.path.exists(rules_path):
+            with open(rules_path, 'r') as f:
+                rules = f.read()
+                prompt += f"\n\nCRITICAL COMPANY GUIDELINES (MUST OBEY):\n{rules}\n"
+        
         # We use run_in_executor if AsyncClient is not readily available in genai,
         # but modern google-genai supports async client. Let's use the synchronous API properly in a thread,
         # or just async client if available. The simplest is client.aio.models.generate_content

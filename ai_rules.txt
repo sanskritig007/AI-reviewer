@@ -1,0 +1,4 @@
+# Company AI Review Guidelines
+1. Do NOT flag minor readability issues, docstring nuances, or edge cases in built-in Python functions.
+2. If the code is mathematically sound and uses standard Python features, do not flag it.
+3. Unless there is a critical security vulnerability or an obvious crash, return 0 issues.
