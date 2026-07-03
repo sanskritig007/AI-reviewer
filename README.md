@@ -73,7 +73,7 @@ GITHUB_TOKEN=your_github_personal_access_token
 GITHUB_WEBHOOK_SECRET=your_custom_webhook_secret
 OPENAI_API_KEY=your_openai_api_key
 GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-flash
+GEMINI_MODEL=your_preferred_gemini_model
 ```
 
 ### 4. Running the Server
