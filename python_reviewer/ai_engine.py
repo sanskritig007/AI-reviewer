@@ -75,7 +75,7 @@ async def call_ai_with_retry(diff_content: str, attempt: int = 1) -> Optional[AI
         # Phase 3: Inject custom company guidelines if ai_rules.txt exists
         rules_path = os.path.join(os.path.dirname(__file__), '..', 'ai_rules.txt')
         if os.path.exists(rules_path):
-            with open(rules_path, 'r') as f:
+            with open(rules_path, 'r', encoding='utf-8') as f:
                 rules = f.read()
                 prompt += f"\n\nCRITICAL COMPANY GUIDELINES (MUST OBEY):\n{rules}\n"
         
