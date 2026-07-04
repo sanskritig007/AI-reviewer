@@ -8,5 +8,5 @@ headers = {
     'Authorization': f'Bearer {os.getenv("GITHUB_TOKEN")}',
     'Accept': 'application/vnd.github.v3+json'
 }
-resp = httpx.get('https://api.github.com/repos/sanskritig007/AI-reviewer/commits/71a9d33/comments', headers=headers)
+resp = httpx.get('https://api.github.com/repos/sanskritig007/AI-reviewer/commits/ba6df51/comments', headers=headers)
 print(json.dumps(resp.json(), indent=2))
