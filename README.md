@@ -5,7 +5,7 @@
 ![OpenAI](https://img.shields.io/badge/AI-OpenAI%2FGemini-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-purple.svg)
 
-An enterprise-grade, automated AI Code Review system built with **FastAPI**. It listens to GitHub push events via webhooks, analyzes the committed code changes (diffs) using Large Language Models (like OpenAI GPT or Google Gemini), and posts detailed, structured review comments directly on your GitHub commits.
+An enterprise-grade, automated AI Code Review system built with **FastAPI**. It listens to GitHub push events via webhooks, analyzes the committed code changes (diffs) using **Google Gemini** (with OpenAI fallback support), and posts detailed, structured review comments directly on your GitHub commits.
 
 ## ✨ Features
 
@@ -110,6 +110,19 @@ You can define custom company guidelines to override the AI's default behavior. 
 2. Unless there is a critical security vulnerability or an obvious crash, return 0 issues.
 ```
 These rules are dynamically injected into the AI's prompt at runtime.
+
+## 📋 Changelog
+
+### `v2.1.0` — July 5, 2025
+
+- **🔀 Migrated AI Backend to Google Gemini:** Replaced OpenAI GPT with `google-genai` SDK as the primary AI engine (`gemini-2.5-flash`). Configurable via `GEMINI_MODEL` env variable.
+- **🛡️ Added Pre-AI Security Scanner:** Introduced `security_scanner.py` — a regex-based scanner that detects hardcoded secrets (API keys, tokens, passwords) in diffs *before* they are sent to the AI, instantly failing the check if a secret is found.
+- **⚙️ Added "God Mode" Custom Rules (`ai_rules.txt`):** Team-specific review guidelines are now dynamically injected into the AI prompt at runtime, giving full control over review strictness.
+- **📊 Added Observability & Metrics Tracking:** `metrics.py` now tracks per-request AI token usage and execution latency for cost monitoring.
+- **🔁 Improved Retry Logic:** AI call retry mechanism updated to handle both `json.JSONDecodeError` and general API exceptions with exponential backoff (2s → 4s → 8s).
+- **🧹 Refactored Chunking:** Increased per-file character limit to 50,000 and chunk limit to 80,000 characters to better utilize Gemini's larger context window.
+
+---
 
 ## 📂 Project Structure
 
