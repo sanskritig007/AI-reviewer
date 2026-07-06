@@ -28,6 +28,21 @@ git push  →  GitHub fires a Webhook  →  FastAPI receives it (responds 200 OK
 - **⚡ Async & Lightweight:** Uses FastAPI `BackgroundTasks` for non-blocking execution and SQLite for simple, zero-setup state management (tracking processed commits).
 - **📊 Metrics Tracking:** Tracks execution time and token usage for cost observability.
 
+## 🛠️ Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Web Framework** | FastAPI | Webhook server, async request handling |
+| **AI Engine** | Google Gemini (`gemini-2.5-flash`) | Code diff analysis & review generation |
+| **GitHub Integration** | GitHub REST API + Webhooks | Fetch diffs, post commit comments |
+| **Data Validation** | Pydantic | Strict schema validation for AI responses |
+| **Database** | SQLite | Idempotency — track processed commits |
+| **Security** | HMAC-SHA256 + Regex Scanner | Webhook auth & secret detection in diffs |
+| **Observability** | Custom Metrics (`metrics.py`) | Token usage & latency tracking |
+| **Tunneling (Dev)** | ngrok | Expose local server for GitHub webhooks |
+
+---
+
 ## 🏗️ Architecture
 
 ```mermaid
