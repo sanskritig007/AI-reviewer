@@ -7,6 +7,18 @@
 
 An enterprise-grade, automated AI Code Review system built with **FastAPI**. It listens to GitHub push events via webhooks, analyzes the committed code changes (diffs) using **Google Gemini** (with OpenAI fallback support), and posts detailed, structured review comments directly on your GitHub commits.
 
+## ⚡ How It Works (In 10 Seconds)
+
+```
+git push  →  GitHub fires a Webhook  →  FastAPI receives it (responds 200 OK instantly)
+          →  Background Task fetches the diff from GitHub REST API
+          →  Security Scanner checks for hardcoded secrets
+          →  AI Engine (Gemini) analyzes the diff in smart chunks
+          →  Structured review is posted as a comment on your commit
+```
+
+---
+
 ## ✨ Features
 
 - **🚀 Push-Based Reviews:** Automatically triggers a review on every `git push`. No need to open a Pull Request.
