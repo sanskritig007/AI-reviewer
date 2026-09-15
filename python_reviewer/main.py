@@ -26,7 +26,7 @@ except ImportError:
 
 app = FastAPI(title="AI GitHub Code Reviewer")
 github_client = GitHubClient()
-WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
+WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET") or os.getenv("WEBHOOK_SECRET")
 
 async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha: str, head_sha: str):
     tracker = get_metrics_tracker()
