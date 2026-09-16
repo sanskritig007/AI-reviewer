@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, Header
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 import hmac
 import hashlib
@@ -111,27 +113,40 @@ async def process_review_task(payload: WebhookPayload, commit_id: str, base_sha:
 @app.post("/webhook")
 async def github_webhook(
     request: Request,
-    payload: WebhookPayload,
     background_tasks: BackgroundTasks,
     x_hub_signature_256: str = Header(None)
 ):
+    body_bytes = await request.body()
+
     # Optional Validation of GitHub Secret
     if WEBHOOK_SECRET:
         if not x_hub_signature_256:
             raise HTTPException(status_code=401, detail="Missing signature header")
         
-        body = await request.body()
         expected_signature = "sha256=" + hmac.new(
-            WEBHOOK_SECRET.encode(), body, hashlib.sha256
+            WEBHOOK_SECRET.encode(), body_bytes, hashlib.sha256
         ).hexdigest()
         
         if not hmac.compare_digest(x_hub_signature_256, expected_signature):
             raise HTTPException(status_code=401, detail="Invalid signature")
 
+    # Handle GitHub ping event
+    x_github_event = request.headers.get("X-GitHub-Event")
+    if x_github_event == "ping":
+        logger.info("Received GitHub ping event. Responding with pong.")
+        return {"status": "pong", "message": "Webhook ping received successfully"}
+
     # Only process push events with commits
-    if x_github_event := request.headers.get("X-GitHub-Event"):
-        if x_github_event != "push":
-            return {"status": "ignored", "reason": "Not a push event"}
+    if x_github_event != "push":
+        return {"status": "ignored", "reason": f"Event '{x_github_event}' is not a push event"}
+
+    import json
+    try:
+        body_json = json.loads(body_bytes.decode("utf-8"))
+        payload = WebhookPayload(**body_json)
+    except Exception as e:
+        logger.warning(f"Could not parse webhook push payload: {e}")
+        return {"status": "ignored", "reason": "Invalid payload format"}
 
     if not payload.commits or not payload.head_commit:
         return {"status": "ignored", "reason": "No commits in push"}

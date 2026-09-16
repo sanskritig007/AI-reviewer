@@ -1,9 +1,11 @@
+# pyrefly: ignore [missing-import]
 import httpx
 import os
 import hmac
 import hashlib
 import json
 import asyncio
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 # Load from the parent directory where your .env is
@@ -16,8 +18,8 @@ if not SECRET:
 
 payload = {
     "ref": "refs/heads/main",
-    "before": "77357cf400484725e311eb214bbeb7130b99eac8",
-    "after": "d88fce79e51431ba0bf0e29096ae06d95223f5dd",
+    "before": "45df1338784f2b26195051b067f2375b850bb516",
+    "after": "2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
     "repository": {
         "id": 12345,
         "name": "AI-reviewer",
@@ -26,9 +28,9 @@ payload = {
     },
     "commits": [
         {
-            "id": "d88fce79e51431ba0bf0e29096ae06d95223f5dd",
-            "message": "test commit",
-            "url": "https://github.com/sanskritig007/AI-reviewer/commit/d88fce79e51431ba0bf0e29096ae06d95223f5dd",
+            "id": "2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
+            "message": "Setting up the server",
+            "url": "https://github.com/sanskritig007/AI-reviewer/commit/2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
             "author": {
                 "name": "test",
                 "email": "test@test.com"
@@ -36,9 +38,9 @@ payload = {
         }
     ],
     "head_commit": {
-        "id": "d88fce79e51431ba0bf0e29096ae06d95223f5dd",
-        "message": "test commit",
-        "url": "https://github.com/sanskritig007/AI-reviewer/commit/d88fce79e51431ba0bf0e29096ae06d95223f5dd",
+        "id": "2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
+        "message": "Setting up the server",
+        "url": "https://github.com/sanskritig007/AI-reviewer/commit/2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
         "author": {
             "name": "test",
             "email": "test@test.com"
