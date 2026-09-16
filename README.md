@@ -3,6 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)
 ![OpenAI](https://img.shields.io/badge/AI-OpenAI%2FGemini-orange.svg)
+[![Architecture Docs](https://img.shields.io/badge/Architecture-WORK.md-brightgreen)](WORK.md)
 ![License](https://img.shields.io/badge/License-MIT-purple.svg)
 
 An enterprise-grade, automated AI Code Review system built with **FastAPI**. It listens to GitHub push events via webhooks, analyzes the committed code changes (diffs) using **Google Gemini** (with OpenAI fallback support), and posts detailed, structured review comments directly on your GitHub commits.
@@ -16,6 +17,10 @@ git push  →  GitHub fires a Webhook  →  FastAPI receives it (responds 200 OK
           →  AI Engine (Gemini) analyzes the diff in smart chunks
           →  Structured review is posted as a comment on your commit
 ```
+
+> 📖 **Full Architectural Deep Dive & Testing Guide:**  
+> For in-depth technical details on local webhook simulation, review accuracy assurance, and future roadmap, read **[WORK.md](WORK.md)**.
+
 
 ---
 
@@ -156,8 +161,10 @@ These rules are dynamically injected into the AI's prompt at runtime.
 ```
 .
 ├── .env                      # Secrets and configuration (Not checked into Git)
+├── WORK.md                   # Complete architectural guide, simulation & accuracy docs
 ├── ai_rules.txt              # Custom company AI guidelines
 ├── python_reviewer/          
+
 │   ├── main.py               # FastAPI entry point & Webhook handler
 │   ├── ai_engine.py          # AI integration, prompt management, and retries
 │   ├── github_client.py      # GitHub REST API interactions (fetch diff, post comment)

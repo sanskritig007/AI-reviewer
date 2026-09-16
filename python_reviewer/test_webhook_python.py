@@ -18,8 +18,8 @@ if not SECRET:
 
 payload = {
     "ref": "refs/heads/main",
-    "before": "45df1338784f2b26195051b067f2375b850bb516",
-    "after": "2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
+    "before": "7473123807dc363e5d070cef68761403587f5897",
+    "after": "4211d77d704fc199279075775f0a35dbf0a0d426",
     "repository": {
         "id": 12345,
         "name": "AI-reviewer",
@@ -28,9 +28,9 @@ payload = {
     },
     "commits": [
         {
-            "id": "2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
-            "message": "Setting up the server",
-            "url": "https://github.com/sanskritig007/AI-reviewer/commit/2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
+            "id": "4211d77d704fc199279075775f0a35dbf0a0d426",
+            "message": "fix: return 400 Bad Request on malformed webhook payload",
+            "url": "https://github.com/sanskritig007/AI-reviewer/commit/4211d77d704fc199279075775f0a35dbf0a0d426",
             "author": {
                 "name": "test",
                 "email": "test@test.com"
@@ -38,9 +38,9 @@ payload = {
         }
     ],
     "head_commit": {
-        "id": "2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
-        "message": "Setting up the server",
-        "url": "https://github.com/sanskritig007/AI-reviewer/commit/2c4e42f1e72ac5bc5d767faee15ff1c65e58490b",
+        "id": "4211d77d704fc199279075775f0a35dbf0a0d426",
+        "message": "fix: return 400 Bad Request on malformed webhook payload",
+        "url": "https://github.com/sanskritig007/AI-reviewer/commit/4211d77d704fc199279075775f0a35dbf0a0d426",
         "author": {
             "name": "test",
             "email": "test@test.com"

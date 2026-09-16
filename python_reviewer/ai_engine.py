@@ -3,8 +3,11 @@ import re
 import json
 import asyncio
 from typing import Dict, List, Optional
+# pyrefly: ignore [missing-import]
 from pydantic import ValidationError
+# pyrefly: ignore [missing-import]
 from google import genai
+# pyrefly: ignore [missing-import]
 from google.genai import types
 
 try:
