@@ -146,7 +146,7 @@ async def github_webhook(
         payload = WebhookPayload(**body_json)
     except Exception as e:
         logger.warning(f"Could not parse webhook push payload: {e}")
-        return {"status": "ignored", "reason": "Invalid payload format"}
+        raise HTTPException(status_code=400, detail="Invalid push payload format")
 
     if not payload.commits or not payload.head_commit:
         return {"status": "ignored", "reason": "No commits in push"}
