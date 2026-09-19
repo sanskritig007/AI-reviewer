@@ -9,4 +9,5 @@ def add_two_integers(first_number: int, second_number: int) -> int:
     Returns:
         int: The sum of the two integers.
     """
+    # Calculate and return the sum of the two integers
     return first_number + second_number
